@@ -11,19 +11,26 @@ public class BusyApplication {
     public static volatile Collection<Object> classInstanceSink = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
-        BadThings.expandHeap();
+        System.out.println("BusyApplication is starting");
 
-        long loaded = 0;
+        BadThings.expandHeap();
+        long nextPrintTime = System.currentTimeMillis();
 
         while (true) {
-            final Class<?> clazz = BottomlessClassLoader.loadHugeClass();
-            classInstanceSink.add(clazz.newInstance());
+            try {
+                final Class<?> clazz = BottomlessClassLoader.loadHugeClass();
+                classInstanceSink.add(clazz.newInstance());
 
-            if ((loaded++ % 10_000L) == 0L) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime >= nextPrintTime) {
+                    nextPrintTime = currentTime + 5_000;
 
-                // TODO: calling clazz.getSimpleName resuts in an IncompatibeClassChangeError
-                System.out.println("Loaded " + loaded + " classes, latest:" + clazz.getName());
-                Thread.sleep(1);
+                    // TODO: calling clazz.getSimpleName results in an IncompatibeClassChangeError
+                    System.out.println("Loaded " + classInstanceSink.size() + " classes, latest:" + clazz.getName());
+                    Thread.sleep(1);
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
             }
         }
     }

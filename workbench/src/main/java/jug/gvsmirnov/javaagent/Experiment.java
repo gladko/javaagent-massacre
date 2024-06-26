@@ -76,7 +76,7 @@ public class Experiment {
                 return javaProcess.exitValue();
             }
 
-            for(Measurement measurement : measurements) {
+            for (Measurement measurement : measurements) {
                 log.debug("Measurement '{}': {}", measurement.name(), measurement.take(iteration));
             }
         }

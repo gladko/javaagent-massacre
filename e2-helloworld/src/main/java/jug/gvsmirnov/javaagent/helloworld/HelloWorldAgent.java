@@ -1,7 +1,12 @@
 package jug.gvsmirnov.javaagent.helloworld;
 
-import org.objectweb.asm.*;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 
 import java.io.PrintStream;
 import java.lang.instrument.ClassFileTransformer;
@@ -10,61 +15,67 @@ import java.security.ProtectionDomain;
 
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
-import static org.objectweb.asm.Opcodes.ASM5;
-import static org.objectweb.asm.Type.getType;
-import static org.objectweb.asm.commons.Method.getMethod;
+import static org.objectweb.asm.Opcodes.ASM9;
 
 public class HelloWorldAgent implements ClassFileTransformer {
-
     public static void premain(String agentArgs, Instrumentation inst) {
         inst.addTransformer(new HelloWorldAgent());
     }
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-                                    ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+                                    ProtectionDomain protectionDomain, byte[] classfileBuffer)
+    {
+        try {
+            if (className == null || !className.equals("jug/gvsmirnov/javaagent/helloworld/HelloWorldApplication")) {
+                return null;
+            }
 
-        if(!className.equals(HelloWorldApplication.class.getName())) {
+            System.out.println("\n\nTransforming class " + className);
+
+            return transformBytes(classfileBuffer);
+        } catch (Throwable t) {
+            t.printStackTrace();
             return null;
         }
-
-        System.out.println("Transforming class " + className);
-
-        return transformBytes(classfileBuffer);
     }
 
-    private static byte[] transformBytes(byte[] originalClassBytes) {
+    private byte[] transformBytes(byte[] originalClassBytes) {
         final ClassReader cr  = new ClassReader(originalClassBytes);
-        final ClassWriter cw  = new ClassWriter(0);
+        final ClassWriter cw  = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
+        ClassVisitor transformer = createTransformer(cw);
 
-        final ClassVisitor cv = new ClassVisitor(ASM5, cw) {
+        cr.accept(transformer, 0);
+        return cw.toByteArray();
+    }
+
+    public ClassVisitor createTransformer(ClassWriter cw) {
+        return new ClassVisitor(ASM9, cw) {
             @Override
             public MethodVisitor visitMethod(
-                    int access, String methodName, String desc, String signature, String[] exceptions
-            ) {
+                    int access, String methodName, String desc, String signature, String[] exceptions)
+            {
                 if (!methodName.equals("main")) {
                     return super.visitMethod(access, methodName, desc, signature, exceptions);
                 }
 
                 System.out.println("Replacing method " + methodName);
-
                 return generateMainMethod(cw);
             }
         };
-
-        cr.accept(cv, 0);
-        return cw.toByteArray();
     }
 
+
     private static MethodVisitor generateMainMethod(ClassWriter cw) {
-        return new GeneratorAdapter(
-                ACC_PUBLIC + ACC_STATIC, getMethod("void main (String[])"), null, null, cw
-        ) {{
-            getStatic(getType(System.class), "out", getType(PrintStream.class));
-            push("Hello, transformed world!");
-            invokeVirtual(getType(PrintStream.class), getMethod("void println (String)"));
-            returnValue();
-            endMethod();
-        }};
+        GeneratorAdapter mg = new GeneratorAdapter(ACC_PUBLIC + ACC_STATIC, Method.getMethod("void main (String[])"),
+                null, null, cw);
+        mg.getStatic(Type.getType(System.class), "out", Type.getType(PrintStream.class));
+        mg.push("Hello, transformed world!");
+        mg.invokeVirtual(Type.getType(PrintStream.class),
+                Method.getMethod("void println (String)"));
+        mg.returnValue();
+        mg.endMethod();
+
+        return mg;
     }
 }

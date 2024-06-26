@@ -1,3 +1,4 @@
+
 buildscript {
     repositories {
         jcenter()
@@ -7,40 +8,38 @@ buildscript {
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
-
-
-repositories {
-    jcenter()
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.4.5'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 }
+
 
 configurations {
     agentCompile
 }
 
 dependencies {
-    compile project(':toolbox')
-    compile project(':workbench')
+    implementation project(':toolbox')
+    implementation project(':workbench')
 
-    compile("org.springframework.boot:spring-boot-starter-web") {
+    implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude module : 'logback-classic'
     }
 
-    compile "net.bytebuddy:byte-buddy:1.6.9"
+    implementation "net.bytebuddy:byte-buddy:1.6.9"
 
     agentCompile "net.bytebuddy:byte-buddy:1.6.9"
 //    agentCompile "javax.servlet:servlet-api:2.5"
 }
 
-task appJar(type: BootRepackage, dependsOn: 'jar') {
-    classifier  = "application.jar"
-    withJarTask = 'jar'
-    mainClass   = "jug.gvsmirnov.javaagent.deps.HelloWorldController"
+bootJar {
+//    archiveFileName  = "e3-deps.jar"
+    mainClass = 'jug.gvsmirnov.javaagent.deps.HelloWorldController'
 }
 
 task agentJar(type: Jar, dependsOn: ['compileJava']) {
-    archiveName = "agent.jar"
+    archiveBaseName = "agent"
 
     manifest {
         attributes(
@@ -54,12 +53,12 @@ task agentJar(type: Jar, dependsOn: ['compileJava']) {
         }
     }
 
-    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.classesDirs)
 
     exclude 'jug/gvsmirnov/javaagent/deps/HelloWorldController.class'
 }
 
-task runBaseline(dependsOn: appJar, type: JavaExec) {
+task runBaseline(dependsOn: bootJar, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     systemProperties = [
             'app.jar.path': 'build/libs/e3-deps.jar'
@@ -69,7 +68,7 @@ task runBaseline(dependsOn: appJar, type: JavaExec) {
     args 'baseline'
 }
 
-task runAgent(dependsOn: [agentJar, appJar], type: JavaExec) {
+task runAgent(dependsOn: [agentJar, bootJar], type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     systemProperties = [
             'app.jar.path': 'build/libs/e3-deps.jar',
@@ -81,7 +80,7 @@ task runAgent(dependsOn: [agentJar, appJar], type: JavaExec) {
 }
 
 
-task runAgentAndTraceClassLoading(dependsOn: [appJar, agentJar], type: JavaExec) {
+task runAgentAndTraceClassLoading(dependsOn: [bootJar, agentJar], type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     systemProperties = [
             'app.jar.path': 'build/libs/e3-deps.jar',

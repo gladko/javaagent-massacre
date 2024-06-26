@@ -95,6 +95,7 @@ public class ExperimentBuilder {
         // LHS to remove duplicates but preserve order
         final Set<String> command = new LinkedHashSet<>();
 
+//        command.add("/Users/koz963/java/zulu17.36.17-ca-jdk17.0.4.1/zulu-17.jdk/Contents/Home/bin/java");
         command.add("java");
         command.add("-jar");
 

@@ -1,16 +1,11 @@
-apply plugin: 'java'
-
-repositories {
-    jcenter()
-}
 
 dependencies {
-    compile project(':toolbox')
-    compile project(':workbench')
+    implementation project(':toolbox')
+    implementation project(':workbench')
 }
 
 task appJar(type: Jar, dependsOn: ['jar']) {
-    archiveName = "application.jar"
+    archiveBaseName = "application"
 
     manifest {
         attributes(
@@ -19,7 +14,7 @@ task appJar(type: Jar, dependsOn: ['jar']) {
     }
 
     from {
-        configurations.compile.collect {
+        configurations.compileClasspath.collect {
             zipTree(it).matching { exclude 'META-INF/**' }
         }
     }
@@ -28,7 +23,7 @@ task appJar(type: Jar, dependsOn: ['jar']) {
 }
 
 task agentJar(type: Jar, dependsOn: ['jar']) {
-    archiveName = "agent.jar"
+    archiveBaseName = "agent"
 
     manifest {
         attributes(
@@ -61,6 +56,7 @@ task runAgent(dependsOn: [appJar, agentJar], type: JavaExec) {
     args 'agent'
 }
 
+//RSS - ResidentSetSize
 task runBaselineAndMonitorRss(dependsOn: appJar, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     systemProperties = [

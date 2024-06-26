@@ -6,12 +6,12 @@ repositories {
 }
 
 dependencies {
-    compile project(':toolbox')
-    compile project(':workbench')
+    implementation project(':toolbox')
+    implementation project(':workbench')
 }
 
 task appJar(type: Jar, dependsOn: ['jar']) {
-    archiveName = "application.jar"
+    archiveBaseName = "application"
 
     manifest {
         attributes(
@@ -20,7 +20,7 @@ task appJar(type: Jar, dependsOn: ['jar']) {
     }
 
     from {
-        configurations.compile.collect {
+        configurations.compileClasspath.collect {
             zipTree(it).matching { exclude 'META-INF/**' }
         }
     }
@@ -70,7 +70,7 @@ task jniHeaders {
 }
 
 task agentJar(type: Jar, dependsOn: ['mainSharedLibrary','jar']) {
-    archiveName = "agent.jar"
+    archiveBaseName = "agent.jar"
 
     manifest {
         attributes(

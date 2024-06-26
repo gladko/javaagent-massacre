@@ -1,20 +1,23 @@
-apply plugin: 'java'
+
 
 // TOOD: deduplicate
 
-repositories {
-    jcenter()
-}
 
 dependencies {
-    compile project(':toolbox')
-    compile project(':workbench')
+    implementation project(':toolbox')
+    implementation project(':workbench')
 
-    compile 'org.ow2.asm:asm-debug-all:5.1'
+    implementation "org.ow2.asm:asm:9.6"
+    implementation "org.ow2.asm:asm-commons:9.6"
+    implementation "org.ow2.asm:asm-tree:9.6"
+    implementation "org.ow2.asm:asm-analysis:9.6"
+    implementation "org.ow2.asm:asm-util:9.6"
 }
 
 task appJar(type: Jar, dependsOn: ['jar']) {
-    archiveName = "application.jar"
+    archiveBaseName = "application"
+
+    duplicatesStrategy =  DuplicatesStrategy.WARN
 
     manifest {
         attributes(
@@ -23,7 +26,7 @@ task appJar(type: Jar, dependsOn: ['jar']) {
     }
 
     from {
-        configurations.compile.collect {
+        configurations.compileClasspath.collect {
             zipTree(it).matching { exclude 'META-INF/**' }
         }
     }
@@ -32,7 +35,7 @@ task appJar(type: Jar, dependsOn: ['jar']) {
 }
 
 task agentJar(type: Jar, dependsOn: ['jar']) {
-    archiveName = "agent.jar"
+    archiveBaseName = "agent"
 
     manifest {
         attributes(
