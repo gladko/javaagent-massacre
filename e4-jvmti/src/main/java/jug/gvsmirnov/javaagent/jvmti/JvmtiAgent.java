@@ -2,13 +2,7 @@ package jug.gvsmirnov.javaagent.jvmti;
 
 import jug.gvsmirnov.toolbox.NativeUtils;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.lang.instrument .Instrumentation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.instrument.Instrumentation;
 
 public class JvmtiAgent {
 
